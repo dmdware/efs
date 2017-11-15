@@ -332,7 +332,7 @@ void draw()
 {
 	char m[1230];
 	float white[4] = {1,1,1,1};
-	float frame[4] = {0,0,(float)g_width,(float)g_height};
+	float frame[4] = {0,g_height/2,(float)g_width,(float)g_height};
 	wg *gui;
 	//mf proj, view, model, mvinv;
 	//float lpos[3], ldir[3];
