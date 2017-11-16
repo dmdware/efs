@@ -206,7 +206,7 @@ const char *SHTEXT[SHADERS][4]
 "	ca = sqrt(1 - min(1,sa*sa));\r\n"
 "	//gl_FragColor = vec4(vec3(1,ca,2)/length(vec3(1,ca,2)), 1); gl_FragDepth = 0.5;\r\n"
 #endif
-"	float p = ((0.5/155.0)/0.5*6371)/300000.0;"
+"	float p = ((0.5/150.0)/0.5*6371)/300000.0;"
 #if 0
 "	dp = rot3f(dp, sa, ca, ra);// * (ad*ad)/(bd*bd);\r\n"
 "	//gl_FragColor = vec4(dp*-1/length(dp)*1, 1); gl_FragDepth = 0.5;\r\n"
@@ -214,7 +214,7 @@ const char *SHTEXT[SHADERS][4]
 "	//gl_FragColor = vec4(1.0/(ad-0.5)*vec3(0.0,1,1)+vec3(1,0,0),1);\r\n"
 "	//gl_FragColor = vec4(vec3(1,sa,2)/length(vec3(1,sa,2)), 1); gl_FragDepth = 0.5;\r\n"
 #endif
-//"	float p = ((0.5/155.0)/0.5*6371*109)/300000.0;"
+//"	float p = ((0.5/150.0)/0.5*6371*109)/300000.0;"
 //"	return (cent-from-dp)/length(cent-from-dp)*sqrt(2 * 6.67 * 10000 * 5.9722 / (length(from+dp-cent)/0.5*6371))*(0.5/6371)*p+dp;\r\n"
 //"	return ( ngv*sqrt(2 * 6.67 * 100000000 * 5.9722 / (1*length(from+dp-cent)/0.5*6371))*(0.5/6371)*p+dp );\r\n"
 "	return ( ngv*sqrt(2 * 6.67 * 100000000 * 5.9722 / (1*length(from+dp-cent)/0.5*6371)) + \r\n"
@@ -253,7 +253,7 @@ const char *SHTEXT[SHADERS][4]
 "	vec3 to = outpos.x * right * width / height + outpos.y * up + view + camcen;\r\n"
 "	vec3 from = camcen;\r\n"
 "	vec3 dp = to - from;\r\n"
-"	dp = dp / length(dp*155);\r\n"
+"	dp = dp / length(dp*150);\r\n"
 "	float i; float f = 0;\r\n"
 "	vec4 outcolor = vec4(0,0,0,0);\r\n"
 "	for(i=0; i<300; i+=1)\r\n"
@@ -271,7 +271,7 @@ const char *SHTEXT[SHADERS][4]
 "		//return;\r\n"
 "		//}\r\n"
 "		from = from + dp;\r\n"
-"		dp = dp / length(dp*155);\r\n"
+"		dp = dp / length(dp*150);\r\n"
 "	}\r\n"
 "	gl_FragColor = outcolor; gl_FragDepth = f;\r\n"
 "	//gl_FragColor = vec4(1,1,1,1);\r\n"
@@ -368,7 +368,7 @@ const char *SHTEXT[SHADERS][4]
 "	//gl_FragColor = vec4(vec3(1,ca,2)/length(vec3(1,ca,2)), 1); gl_FragDepth = 0.5;\r\n"
 #endif
 "	//float gl = length(gv);	float s = 1.0 / (gl*gl);\r\n"
-"	float p = ((0.5/155.0)/0.5*6371)/300000.0;"
+"	float p = ((0.5/150.0)/0.5*6371)/300000.0;"
 #if 0
 "	dp = rot3f(dp, sa, ca, ra);// * (ad*ad)/(bd*bd);\r\n"
 "	//gl_FragColor = vec4(dp*-1/length(dp)*1, 1); gl_FragDepth = 0.5;\r\n"
@@ -407,7 +407,7 @@ const char *SHTEXT[SHADERS][4]
 "	vec3 to = outpos.x * right * width / height + outpos.y * up + view + camcen;\r\n"
 "	vec3 from = camcen;\r\n"
 "	vec3 dp = to - from;\r\n"
-"	dp = dp / length(dp*155);\r\n"
+"	dp = dp / length(dp*150);\r\n"
 "	float i; float f = 0;\r\n"
 "	vec4 outcolor = vec4(0,0,0,0);\r\n"
 "	for(i=0; i<300; i+=1)\r\n"
@@ -417,7 +417,7 @@ const char *SHTEXT[SHADERS][4]
 "		f = f + (1.0 - outcolor.w) * 1 / 300.0 / 3.0;"
 "		outcolor = outcolor + color * max(0, color.w - outcolor.w);\r\n"
 "		from = from + dp;\r\n"
-"		dp = dp / length(dp*155);\r\n"
+"		dp = dp / length(dp*150);\r\n"
 "	}\r\n"
 "	gl_FragColor = outcolor; gl_FragDepth = f; //gl_FragColor = vec4(1,1,1,1);\r\n"
 "}"

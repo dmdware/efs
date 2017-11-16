@@ -139,6 +139,7 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	static int ti = -1;
 	static int t2 = -1;
 	static float rx = 0;
+	static float rxx = 0;
 	mf mvp;
 	glshader *s;
 	v3f corner[4];
@@ -149,8 +150,12 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	v3f srt, mft;
 	v3f np;
 	v3f ep;
+	mf pp, vp;
+	v3f vv;
+	float ee;
 
-	rx += 0.005;
+	rx += 0.001 * g_drawiv * 30.0f;
+	rxx += 27576.0 / (6371/0.5) / 60.0f / 60.0f / 30.0f;
 
 	//return;
 	if (ti == -1)
@@ -172,19 +177,32 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	//u = g_camf.up;
 	r = g_camf.strafe;
 
-	v3fadd(&np, g_camf.pos, g_camf.v);
+	vv = g_camf.v;
+	v3fmul(&vv, vv, g_drawiv * 30.0f);
+	v3fadd(&np, g_camf.pos, vv);
 
 	ep.x = EX;
 	ep.y = EY;
 	ep.z = EZ;
 	v3fsub(&np, np, ep);
 
-	if(mag3f(np) > 0.5f)
-		v3fadd(&g_camf.pos, g_camf.pos, g_camf.v);
-
-	v3fadd(&g_camf.view, g_camf.view, g_camf.v);
-	v3fmul(&srt, g_camf.strafe, 1000.0 / (30.0*60.0) / (6371 / 0.5));
-	v3fmul(&mft, v, 1000.0 / (30.0*60.0) / (6371 / 0.5));
+	if (mag3f(np) > 0.5f)
+	{
+		v3fadd(&g_camf.pos, g_camf.pos, vv);
+		v3fadd(&g_camf.view, g_camf.view, vv);
+		v3fsub(&np, ep, g_camf.pos);
+		ee = mag3f(np);
+		v3fmul(&np, np, 1.0 * 5.972 * 1000 * 6.67408 * g_drawiv * 30.0f / (ee*ee*ee / (0.5 / 6371) / (0.5 / 6371) / (0.5 / 6371)) / (6371/0.5));
+		v3fadd(&g_camf.v, g_camf.v, np);
+	}
+	else
+	{
+		g_camf.v.x = 0;
+		g_camf.v.y = 0;
+		g_camf.v.z = 0;
+	}
+	v3fmul(&srt, g_camf.strafe, 1000.0 / (30.0*60.0) / (6371 / 0.5) * g_drawiv * 30.0f);
+	v3fmul(&mft, v, 1000.0 / (30.0*60.0) / (6371 / 0.5) * g_drawiv * 30.0f);
 
 	if (g_camf.r)	v3fadd(&g_camf.v, g_camf.v, srt);
 	if (g_camf.b)	v3fsub(&g_camf.v, g_camf.v, mft);
@@ -216,6 +234,50 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	mv.x += EX;
 	mv.y += EY;
 	mv.z += EZ;
+
+#if 0
+	g_camf.v.x = 0;
+	g_camf.v.y = 0;
+	g_camf.v.z = 0;
+	g_camf.pos = mv;
+	g_camf.pos.x += 0.5f;
+	g_camf.view = g_camf.pos;
+	g_camf.view.x -= 1.0f;
+	g_camf.strafe.x = 0;
+	g_camf.strafe.y = 1;
+	g_camf.strafe.z = 0;
+	g_camf.up.x = 0;
+	g_camf.up.y = 0;
+	g_camf.up.z = -1;
+	v3fsub(&g_camf.view, g_camf.view, g_camf.pos);
+	g_camf.up = norm3f(cross3f(g_camf.strafe, g_camf.view));
+	v3fadd(&g_camf.view, g_camf.view, g_camf.pos);
+#endif
+
+#if 0
+	v3fsub(&g_camf.view, g_camf.view, g_camf.pos);
+	g_camf.pos.x = 0;
+	g_camf.pos.y = 0;
+	g_camf.pos.z = (408 + 6371) / (6371 / 0.5);
+	//g_camf.pos = rot3f(g_camf.pos, 92.0f * 60 * rxx / 40075.0 * 3.14159 * 2.0, 2.0 * 3.14159 * rx, 0, 1, 0);
+	g_camf.pos = rot3f(g_camf.pos, 2.0 * 3.14159 * rx, 0, 1, 0);
+	g_camf.pos.x += EX;
+	g_camf.pos.y += EY;
+	g_camf.pos.z += EZ;
+	v3fadd(&g_camf.view, g_camf.view, g_camf.pos);
+#endif
+
+	pp = pproj(40.0f,
+		(float)g_width / (float)g_height,
+		0.1f, MAX_DISTANCE);
+	//MAX_DISTANCE, 0.1f);
+
+	vp = lookat(g_camf.view.x, g_camf.view.y, g_camf.view.z,
+		g_camf.pos.x, g_camf.pos.y, g_camf.pos.z,
+		g_camf.up.x, g_camf.up.y, g_camf.up.z);
+
+	mfset((mf*)proj, (float*)&pp);
+	mfset((mf*)viewmat, (float*)&vp);
 
 	//mfset(&mvp, proj);
 	//mfpostmult2(&mvp, (mf*)viewmat);
@@ -371,7 +433,7 @@ void draw()
 			(float*)&lpos, (float*)&ldir);
 	}
 
-	sprintf(m, "%f,%f,%f kmph    \r\n%f,%f,%f km  \r\nview %f,%f,%f \r\ned%f",
+	sprintf(m, "%f,%f,%f kmph    \r\n%f,%f,%f km  \r\nview %f,%f,%f \r\ned%f \r\nfps%f",
 		g_camf.v.x * (6371 / 0.5) * 30.0f * 60.0f * 60,
 		g_camf.v.y * (6371 / 0.5) * 30.0f * 60.0f * 60,
 		g_camf.v.z * (6371 / 0.5) * 30.0f * 60.0f * 60,
@@ -381,7 +443,8 @@ void draw()
 		(g_camf.view.x - g_camf.pos.x),
 		(g_camf.view.y - g_camf.pos.y),
 		(g_camf.view.z - g_camf.pos.z),
-		sqrtf( (EX-g_camf.pos.x)*(EX - g_camf.pos.x) + (EY - g_camf.pos.y)*(EY - g_camf.pos.y) + (EZ - g_camf.pos.z)*(EZ - g_camf.pos.z) ) * (6371 / 0.5) - 6371);
+		sqrtf( (EX-g_camf.pos.x)*(EX - g_camf.pos.x) + (EY - g_camf.pos.y)*(EY - g_camf.pos.y) + (EZ - g_camf.pos.z)*(EZ - g_camf.pos.z) ) * (6371 / 0.5) - 6371,
+		(float)g_indrawfps);
 	drawt(MAINFONT16, frame, frame, m,
 	white, 0, -1, dfalse, dtrue);
 
