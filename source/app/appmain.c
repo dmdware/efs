@@ -201,8 +201,8 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 		g_camf.v.y = 0;
 		g_camf.v.z = 0;
 	}
-	v3fmul(&srt, g_camf.strafe, 1000.0 / (30.0*60.0) / (6371 / 0.5) * g_drawiv * 30.0f);
-	v3fmul(&mft, v, 1000.0 / (30.0*60.0) / (6371 / 0.5) * g_drawiv * 30.0f);
+	v3fmul(&srt, g_camf.strafe, 100.0 / (30.0*60.0) / (6371 / 0.5) * g_drawiv * 30.0f);
+	v3fmul(&mft, v, 100.0 / (30.0*60.0) / (6371 / 0.5) * g_drawiv * 30.0f);
 
 	if (g_camf.r)	v3fadd(&g_camf.v, g_camf.v, srt);
 	if (g_camf.b)	v3fsub(&g_camf.v, g_camf.v, mft);
