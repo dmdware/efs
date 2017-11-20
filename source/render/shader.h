@@ -25,7 +25,8 @@
 #define SSLOT_VIEW				16
 #define SSLOT_RIGHT				17
 #define SSLOT_UP				18
-#define SSLOTS					19
+#define SSLOT_SP				19
+#define SSLOTS					20
 
 struct glshader
 {
@@ -52,7 +53,8 @@ typedef struct glshader glshader;
 #define SH_COLOR3D				2
 #define SH_E					3
 #define SH_M					4
-#define SHADERS					5
+#define SH_S					5
+#define SHADERS					6
 
 extern glshader g_shader[SHADERS];
 extern signed char g_cursh;

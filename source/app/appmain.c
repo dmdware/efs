@@ -25,10 +25,13 @@ char g_restage = 0;
 
 #define MX	0
 #define MY	0
-#define MZ -0.7
+#define MZ -0.5/6371*384400
 #define EX	0.1
 #define EY	0
 #define EZ	1.5
+#define SX	0
+#define SY	0
+#define SZ	149600000/6371.0*0.5
 
 #ifdef PLAT_WIN
 HINSTANCE g_hinst = NULL;
@@ -133,13 +136,33 @@ void update()
 	}
 }
 
+float rx = 0;
+float rxx = 0;
+float rxxx = 0;
+
+v3f mvf()
+{
+	v3f mv;
+
+	mv.x = MX;
+	mv.y = MY;
+	mv.z = MZ;
+
+	mv = rot3f(mv, 2.0 * 3.14159 * rx, 0, 1, 0);
+
+	mv.x += EX;
+	mv.y += EY;
+	mv.z += EZ;
+
+	return mv;
+}
+
 void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv,
 	float mvLightPos[3], float lightDir[3])
 {
 	static int ti = -1;
 	static int t2 = -1;
-	static float rx = 0;
-	static float rxx = 0;
+	static int t3 = -1;
 	mf mvp;
 	glshader *s;
 	v3f corner[4];
@@ -153,15 +176,18 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	mf pp, vp;
 	v3f vv;
 	float ee;
+	v3f npp;
 
-	rx += 0.001 * g_drawiv * 30.0f;
-	rxx += 27576.0 / (6371/0.5) / 60.0f / 60.0f / 30.0f;
+	rx += 4.2314383254416208096062122801017 / 10000000 / 30.0f * g_drawiv * 30.0f;
+	rxx += 4.2314383254416208096062122801017 / 10000000 / 30.0f * g_drawiv * 30.0f;
 
 	//return;
 	if (ti == -1)
 		createtex(&(unsigned int)ti, "tex/1_earth_8k.jpg", dfalse, dfalse, dfalse);
-	if(t2 == -1)
+	if (t2 == -1)
 		createtex(&(unsigned int)t2, "tex/moon.jpg", dfalse, dfalse, dfalse);
+	if (t3 == -1)
+		createtex(&(unsigned int)t3, "tex/sun.jpg", dfalse, dfalse, dfalse);
 
 		//createtex(&(unsigned int)ti, "tex/paper_grid_PNG5432.jpg", dfalse, dfalse, dfalse);
 	//ti = 0;
@@ -180,20 +206,27 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	vv = g_camf.v;
 	v3fmul(&vv, vv, g_drawiv * 30.0f);
 	v3fadd(&np, g_camf.pos, vv);
+	npp = np;
 
 	ep.x = EX;
 	ep.y = EY;
 	ep.z = EZ;
 	v3fsub(&np, np, ep);
 
-	if (mag3f(np) > 0.5f)
+	mv = mvf();
+	v3fsub(&npp, npp, mv);
+
+	if (mag3f(np) > 0.5f && mag3f(npp) > 0.5f * 1737 / 6371)
 	{
 		v3fadd(&g_camf.pos, g_camf.pos, vv);
 		v3fadd(&g_camf.view, g_camf.view, vv);
 		v3fsub(&np, ep, g_camf.pos);
 		ee = mag3f(np);
-		v3fmul(&np, np, 1.0 * 5.972 * 1000 * 6.67408 * g_drawiv * 30.0f / (ee*ee*ee / (0.5 / 6371) / (0.5 / 6371) / (0.5 / 6371)) / (6371/0.5));
+		v3fmul(&np, np, 1.0 * 5.972 * 1000 * 6.67408 * g_drawiv * 30.0f / (ee*ee*ee / (0.5 / 6371) / (0.5 / 6371) / (0.5 / 6371)) / (6371 / 0.5));
+		ee = mag3f(npp);
+		v3fmul(&npp, npp, 1.0 * 7.3476730 * 10 * 6.67408 * g_drawiv * 30.0f / (ee*ee*ee / (0.5 / 6371) / (0.5 / 6371) / (0.5 / 6371)) / (6371 / 0.5));
 		v3fadd(&g_camf.v, g_camf.v, np);
+		v3fadd(&g_camf.v, g_camf.v, npp);
 	}
 	else
 	{
@@ -225,15 +258,7 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	corner[3].y = -1.0f;
 	corner[3].z = 1.0f;
 
-	mv.x = MX;
-	mv.y = MY;
-	mv.z = MZ;
-
-	mv = rot3f(mv, 2.0 * 3.14159 * rx, 0, 1, 0);
-
-	mv.x += EX;
-	mv.y += EY;
-	mv.z += EZ;
+	mv = mvf();
 
 #if 0
 	g_camf.v.x = 0;
@@ -294,6 +319,7 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	//glUniform3f(s->slot[SSLOT_EP], 0, 0, -23073.300894679014283471982420342);
 	glUniform3f(s->slot[SSLOT_EP], EX, EY, EZ);
 	glUniform3f(s->slot[SSLOT_MP], mv.x, mv.y, mv.z);
+	glUniform3f(s->slot[SSLOT_SP], SX, SY, SZ);
 	glUniform3f(s->slot[SSLOT_CORNERA], corner[0].x, corner[0].y, corner[0].z);
 	glUniform3f(s->slot[SSLOT_CORNERB], corner[1].x, corner[1].y, corner[1].z);
 	glUniform3f(s->slot[SSLOT_CORNERC], corner[2].x, corner[2].y, corner[2].z);
@@ -317,6 +343,7 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	//glUniform3f(s->slot[SSLOT_EP], 0, 0, -23073.300894679014283471982420342);
 	glUniform3f(s->slot[SSLOT_EP], EX, EY, EZ);
 	glUniform3f(s->slot[SSLOT_MP], mv.x, mv.y, mv.z);
+	glUniform3f(s->slot[SSLOT_SP], SX, SY, SZ);
 	glUniform3f(s->slot[SSLOT_CORNERA], corner[0].x, corner[0].y, corner[0].z);
 	glUniform3f(s->slot[SSLOT_CORNERB], corner[1].x, corner[1].y, corner[1].z);
 	glUniform3f(s->slot[SSLOT_CORNERC], corner[2].x, corner[2].y, corner[2].z);
@@ -332,6 +359,32 @@ void drawscene(float* proj, float* viewmat, float* modelmat, float* modelviewinv
 	glVertexPointer(3, GL_FLOAT, 0, corner);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	endsh();
+#if 02
+	usesh(SH_S);
+	s = g_shader + g_cursh;
+	glUniform1f(s->slot[SSLOT_RX], rxxx);
+	glUniformMatrix4fv(s->slot[SSLOT_MVP], 1, GL_FALSE, mvp.matrix);
+	glUniform3f(s->slot[SSLOT_CAMCEN], g_camf.pos.x, g_camf.pos.y, g_camf.pos.z);
+	//glUniform3f(s->slot[SSLOT_EP], 0, 0, -23073.300894679014283471982420342);
+	glUniform3f(s->slot[SSLOT_EP], EX, EY, EZ);
+	glUniform3f(s->slot[SSLOT_MP], mv.x, mv.y, mv.z);
+	glUniform3f(s->slot[SSLOT_SP], SX, SY, SZ);
+	glUniform3f(s->slot[SSLOT_CORNERA], corner[0].x, corner[0].y, corner[0].z);
+	glUniform3f(s->slot[SSLOT_CORNERB], corner[1].x, corner[1].y, corner[1].z);
+	glUniform3f(s->slot[SSLOT_CORNERC], corner[2].x, corner[2].y, corner[2].z);
+	glUniform3f(s->slot[SSLOT_CORNERD], corner[3].x, corner[3].y, corner[3].z);
+	glUniform3f(s->slot[SSLOT_RIGHT], r.x, r.y, r.z);
+	glUniform3f(s->slot[SSLOT_UP], u.x, u.y, u.z);
+	glUniform3f(s->slot[SSLOT_VIEW], v.x, v.y, v.z);
+	glUniform1f(s->slot[SSLOT_WIDTH], g_width);
+	glUniform1f(s->slot[SSLOT_HEIGHT], g_height);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, g_tex[t3].texname);
+	glUniform1i(s->slot[SSLOT_TEXTURE0], 0);
+	glVertexPointer(3, GL_FLOAT, 0, corner);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+	endsh();
+#endif
 
 	glDisable(GL_DEPTH_TEST);
 	endsh();
@@ -394,8 +447,9 @@ void draw()
 {
 	char m[1230];
 	float white[4] = {1,1,1,1};
-	float frame[4] = {0,g_height/2,(float)g_width,(float)g_height};
+	float frame[4] = {0,g_height/3,(float)g_width,(float)g_height};
 	wg *gui;
+	v3f mv;
 	//mf proj, view, model, mvinv;
 	//float lpos[3], ldir[3];
 
@@ -433,7 +487,9 @@ void draw()
 			(float*)&lpos, (float*)&ldir);
 	}
 
-	sprintf(m, "%f,%f,%f kmph    \r\n%f,%f,%f km  \r\nview %f,%f,%f \r\ned%f \r\nfps%f",
+	mv = mvf();
+
+	sprintf(m, "%f,%f,%f kmph    \r\n%f,%f,%f km  \r\nview %f,%f,%f \r\ned%f \r\nfps%f \r\nmd%f \r\nsd%f",
 		g_camf.v.x * (6371 / 0.5) * 30.0f * 60.0f * 60,
 		g_camf.v.y * (6371 / 0.5) * 30.0f * 60.0f * 60,
 		g_camf.v.z * (6371 / 0.5) * 30.0f * 60.0f * 60,
@@ -444,8 +500,11 @@ void draw()
 		(g_camf.view.y - g_camf.pos.y),
 		(g_camf.view.z - g_camf.pos.z),
 		sqrtf( (EX-g_camf.pos.x)*(EX - g_camf.pos.x) + (EY - g_camf.pos.y)*(EY - g_camf.pos.y) + (EZ - g_camf.pos.z)*(EZ - g_camf.pos.z) ) * (6371 / 0.5) - 6371,
-		(float)g_indrawfps);
-	drawt(MAINFONT16, frame, frame, m,
+		(float)g_indrawfps,
+		sqrtf((mv.x - g_camf.pos.x)*(mv.x - g_camf.pos.x) + (mv.y - g_camf.pos.y)*(mv.y - g_camf.pos.y) + (mv.z - g_camf.pos.z)*(mv.z - g_camf.pos.z)) * (6371 / 0.5) - 1737,
+		sqrtf((SX - g_camf.pos.x)*(SX - g_camf.pos.x) + (SY - g_camf.pos.y)*(SY - g_camf.pos.y) + (SZ - g_camf.pos.z)*(SZ - g_camf.pos.z)) * (6371 / 0.5) - 695700
+		);
+	drawt(MAINFONT8, frame, frame, m,
 	white, 0, -1, dfalse, dtrue);
 
 	wgframeup(gui);
